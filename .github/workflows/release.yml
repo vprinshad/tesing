@@ -1,11 +1,10 @@
-name: test
-on:
-  workflow_dispatch:
-    
-jobs:
-  hello:
-    runs-on: ubuntu-latest
+name: example
 
-      steps:
-      - name: Hello Step
-          run: echo "Hello ${{ github.event.inputs.name }}"
+on: push
+
+jobs:
+  job_1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: My first step
+        run: echo This is the first step of my first job.
