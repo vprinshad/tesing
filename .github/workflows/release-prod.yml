@@ -18,21 +18,48 @@ jobs:
           # Your build and deployment commands here
           echo "Building and deploying NGINX..."
 
-  # manual-approval:
-  #   needs: build
-  #   runs-on: ubuntu-latest
+  manual-approval:
+    needs: build
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Manual Approval
-  #       uses: trstringer/manual-approval@v1
-  #       with:
-  #         approvers: 'vprinshad'
-  #         minimum-approvals: 1
-  #         issue-title: 'Review and Approve NGINX Deployment'
-  #         issue-body: 'Please review the NGINX deployment changes and approve.'
+    steps:
+      - name: Create Pull Request
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const github = context.github;
+            const { data } = await github.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Manual Approval',
+              head: context.sha,
+              base: 'prod',
+              body: 'Please review the NGINX deployment changes and approve.',
+            });
+            core.setOutput('pull_request_number', data.number);
+
+      - name: Wait for Approval
+        id: approval
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const github = context.github;
+            const { data } = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            core.setOutput('approved', data.state === 'approved');
+
+      - name: Check Approval
+        run: |
+          if [ "${{ steps.approval.outputs.approved }}" != "true" ]; then
+            echo "Manual approval not granted. Exiting."
+            exit 1
+          fi
 
   deploy:
-    # needs: manual-approval
+    needs: manual-approval
     runs-on: ubuntu-latest
 
     steps:
@@ -43,22 +70,3 @@ jobs:
         run: |
           # Your deployment commands here
           echo "Deploying NGINX..."
-
-# Uncomment the following section if needed
-# name: Manual Trigger and release pipeline
-# on:
-#   workflow_dispatch:
-#     branches:
-#       - prod
-# jobs:
-#   job_1:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: My first step
-#         run: echo This is the first step of my first job.
-#       - uses: vprinshad/tesing.git@v1
-#         with:
-#           approvers: 'vprinshad'
-#           minimum-approvals: 1
-#           issue-title: 'Review and Approve Deployment'
-#           issue-body: 'Please review the changes and approve the deployment to production.'
