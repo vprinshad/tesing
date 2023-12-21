@@ -23,13 +23,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Manual Approval
-        uses: trstringer/manual-approval@v1
-        with:
-          approvers: 'vprinshad'
-          minimum-approvals: 1
-          issue-title: 'Review and Approve NGINX Deployment'
-          issue-body: 'Please review the NGINX deployment changes and approve.'
+      - name: Wait for Pull Request Approval
+        id: wait-for-approval
+        run: |
+          PULL_REQUEST_STATE=""
+          while [ "$PULL_REQUEST_STATE" != "closed" ] && [ "$PULL_REQUEST_STATE" != "merged" ]; do
+            PULL_REQUEST_STATE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r .state)
+            
+            if [ "$PULL_REQUEST_STATE" == "closed" ]; then
+              echo "Pull request closed. Exiting."
+              exit 1
+            elif [ "$PULL_REQUEST_STATE" == "open" ]; then
+              echo "Pull request still open. Waiting..."
+              sleep 10
+            elif [ "$PULL_REQUEST_STATE" == "merged" ]; then
+              echo "Pull request merged. Continuing..."
+              break
+            else
+              echo "Unknown pull request state. Exiting."
+              exit 1
+            fi
+          done
+
+      - name: Check for Approvals
+        run: |
+          APPROVALS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" | jq -r '.[] | select(.state=="APPROVED")')
+          
+          if [ -z "$APPROVALS" ]; then
+            echo "No approvals found. Exiting."
+            exit 1
+          else
+            echo "::set-output name=approved::true"
+          fi
 
   deploy:
     needs: manual-approval
@@ -43,25 +68,5 @@ jobs:
         run: |
           # Your deployment commands here
           echo "Deploying NGINX..."
-
-
-###############################
-# name: Manual Trigger and release pipeline
-
-# on:
-#   workflow_dispatch:
-#     branches:
-#       - prod
-
-# jobs:
-#   job_1:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: My first step
-#         run: echo This is the first step of my first job.
-#       - uses: vprinshad/tesing.git@v1
-#         with:
-#           approvers: 'vprinshad'  # Replace with the actual team name
-#           minimum-approvals: 1
-#           issue-title: 'Review and Approve Deployment'
-#           issue-body: 'Please review the changes and approve the deployment to production.'
+#######################
+##############
