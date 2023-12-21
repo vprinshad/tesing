@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: trstringer/manual-approval@v1
         with:
-          secret: "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"
+          secret: ${{ secrets.YOUR_PERSONAL_ACCESS_TOKEN }}
           approvers: trstringer,vprinshad,sharoon001
       - name: Deploy to production
         run: echo deploying
