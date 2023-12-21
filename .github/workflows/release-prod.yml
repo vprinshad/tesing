@@ -3,7 +3,7 @@ name: NGINX Deployment
 on:
   push:
     branches:
-      - main
+      - prod
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
       - name: Manual Approval
         uses: trstringer/manual-approval@v1
         with:
-          approvers: 'your-github-username'
+          approvers: 'vprinshad'
           minimum-approvals: 1
           issue-title: 'Review and Approve NGINX Deployment'
           issue-body: 'Please review the NGINX deployment changes and approve.'
