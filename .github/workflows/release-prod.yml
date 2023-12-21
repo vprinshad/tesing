@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: My first step
         run: echo This is the first step of my first job.
-      - uses: vprinshad/manual-approval@v1
+      - uses: vprinshad/tesing@v1
         with:
           approvers: 'testing'  # Replace with the actual team name
           minimum-approvals: 1
