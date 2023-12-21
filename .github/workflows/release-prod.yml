@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: My first step
         run: echo This is the first step of my first job.
-      - uses: trstringer/manual-approval@v1
+      - uses: vprinshad/manual-approval@v1
         with:
-          approvers: 'my-team'  # Replace with the actual team name
+          approvers: 'testing'  # Replace with the actual team name
           minimum-approvals: 1
           issue-title: 'Review and Approve Deployment'
           issue-body: 'Please review the changes and approve the deployment to production.'
