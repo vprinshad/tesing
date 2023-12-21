@@ -26,7 +26,7 @@ jobs:
       - name: Manual Approval
         uses: trstringer/manual-approval@v1
         with:
-          approvers: 'vprinshad'
+          approvers: 'your-github-username'
           minimum-approvals: 1
           issue-title: 'Review and Approve NGINX Deployment'
           issue-body: 'Please review the NGINX deployment changes and approve.'
