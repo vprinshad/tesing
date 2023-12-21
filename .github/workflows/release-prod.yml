@@ -24,32 +24,43 @@ jobs:
 
     steps:
       - name: Create Pull Request
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const github = context.github;
-            const { data } = await github.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Manual Approval',
-              head: context.sha,
-              base: 'prod',
-              body: 'Please review the NGINX deployment changes and approve.',
-            });
-            core.setOutput('pull_request_number', data.number);
+        run: |
+          PR_URL=$(curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls \
+            -d '{"head": "${{ github.sha }}", "base": "prod", "title": "Manual Approval", "body": "Please review the NGINX deployment changes and approve."}' \
+            | jq -r .url)
+
+          echo "::set-output name=pr_url::$PR_URL"
 
       - name: Wait for Approval
         id: approval
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const github = context.github;
-            const { data } = await github.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-            });
-            core.setOutput('approved', data.state === 'approved');
+        run: |
+          while true; do
+            STATE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.manual-approval.outputs.pr_url }} | jq -r .state)
+            if [ "$STATE" == "closed" ]; then
+              echo "Pull request closed. Exiting."
+              exit 1
+            elif [ "$STATE" == "open" ]; then
+              echo "Pull request still open. Waiting..."
+              sleep 10
+            elif [ "$STATE" == "merged" ]; then
+              echo "Pull request merged. Continuing..."
+              break
+            else
+              echo "Unknown pull request state. Exiting."
+              exit 1
+            fi
+          done
+
+          APPROVAL=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.manual-approval.outputs.pr_url }}/reviews | jq -r '.[] | select(.state=="APPROVED")')
+          if [ -z "$APPROVAL" ]; then
+            echo "No approvals found. Exiting."
+            exit 1
+          fi
+
+          echo "::set-output name=approved::true"
 
       - name: Check Approval
         run: |
