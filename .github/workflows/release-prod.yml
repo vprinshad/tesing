@@ -45,8 +45,8 @@ jobs:
           echo "Deploying NGINX..."
 
 
-###################################
-## name: Manual Trigger and release pipeline
+###############################
+# name: Manual Trigger and release pipeline
 
 # on:
 #   workflow_dispatch:
