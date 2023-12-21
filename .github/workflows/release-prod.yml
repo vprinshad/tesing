@@ -18,21 +18,21 @@ jobs:
           # Your build and deployment commands here
           echo "Building and deploying NGINX..."
 
-  manual-approval:
-    needs: build
-    runs-on: ubuntu-latest
+  # manual-approval:
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Manual Approval
-        uses: trstringer/manual-approval@v1
-        with:
-          approvers: 'vprinshad'
-          minimum-approvals: 1
-          issue-title: 'Review and Approve NGINX Deployment'
-          issue-body: 'Please review the NGINX deployment changes and approve.'
+  #   steps:
+  #     - name: Manual Approval
+  #       uses: trstringer/manual-approval@v1
+  #       with:
+  #         approvers: 'vprinshad'
+  #         minimum-approvals: 1
+  #         issue-title: 'Review and Approve NGINX Deployment'
+  #         issue-body: 'Please review the NGINX deployment changes and approve.'
 
   deploy:
-    needs: manual-approval
+    # needs: manual-approval
     runs-on: ubuntu-latest
 
     steps:
