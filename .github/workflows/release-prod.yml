@@ -7,64 +7,20 @@ on:
 
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Build and Deploy
-        run: |
-          # Your build and deployment commands here
-          echo "Building and deploying NGINX..."
-
-  manual-approval:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Wait for Pull Request Approval
-        id: wait-for-approval
-        run: |
-          PULL_REQUEST_STATE=""
-          while [ "$PULL_REQUEST_STATE" != "closed" ] && [ "$PULL_REQUEST_STATE" != "merged" ]; do
-            PULL_REQUEST_STATE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r .state)
-            
-            if [ "$PULL_REQUEST_STATE" == "closed" ]; then
-              echo "Pull request closed. Exiting."
-              exit 1
-            elif [ "$PULL_REQUEST_STATE" == "open" ]; then
-              echo "Pull request still open. Waiting..."
-              sleep 10
-            elif [ "$PULL_REQUEST_STATE" == "merged" ]; then
-              echo "Pull request merged. Continuing..."
-              break
-            else
-              echo "Unknown pull request state. Exiting."
-              exit 1
-            fi
-          done
-
-      - name: Check for Approvals
-        run: |
-          APPROVALS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" | jq -r '.[] | select(.state=="APPROVED")')
-          
-          if [ -z "$APPROVALS" ]; then
-            echo "No approvals found. Exiting."
-            exit 1
-          else
-            echo "::set-output name=approved::true"
-          fi
+      - name: Build
+        run: echo building
 
   deploy:
-    needs: manual-approval
+    name: deploy
     runs-on: ubuntu-latest
-
+    needs: build
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Deploy NGINX
-        run: |
-          # Your deployment commands here
-          echo "Deploying NGINX..."
+      - uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: trstringer,acdunnigan
+      - name: Deploy to production
+        run: echo deploying
