@@ -23,6 +23,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Install curl
+        run: sudo apt-get update && sudo apt-get install -y curl
       - name: Create Pull Request
         run: |
           PR_URL=$(curl -X POST \
